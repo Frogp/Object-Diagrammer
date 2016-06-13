@@ -1,0 +1,1 @@
+del Parse\*.class Lex\*.class modeler\*.class Figure\*.class
