@@ -1,0 +1,10 @@
+package Figure;
+
+class Line extends Figure 
+{
+	protected int _x1;
+    protected int _y1;
+    protected int _x2;
+    protected int _y2;
+
+}

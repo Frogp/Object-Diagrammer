@@ -1,0 +1,50 @@
+package modeler;
+
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.tree.*;
+import java.awt.*;
+import java.awt.event.*;
+
+import java.util.*;
+import Parse.*;
+import Figure.*;
+ 
+class BackPanel extends JPanel 
+	{
+
+	public ControllPane splitPane;
+	public Modeler modeler;	
+
+	BackPanel(Modeler modeler)
+	{   
+		this.modeler = modeler;
+		splitPane = new ControllPane(this, JSplitPane.HORIZONTAL_SPLIT);
+
+	}
+
+	public void paintComponent(Graphics g)
+	{
+		super.paintComponent(g);
+		splitPane.repaint();
+	}	
+	void setNodes(ArrayList<KClass> classes)
+	{
+		splitPane.setNodes(classes);
+	}
+	public ControllPane getSplitPane()
+	{     
+		return splitPane;    
+	} 
+	public void toggleTree()
+	{
+		splitPane.toggleTree();
+	}
+	public DrawerModel getModel()
+	{
+		return splitPane.getModel();
+	}
+	public ArrayList<KClass> getClasses(){
+		return modeler.getClasses();
+	}
+}

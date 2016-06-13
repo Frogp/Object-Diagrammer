@@ -1,0 +1,16 @@
+public class SaveInfo implements Serializable
+	{
+		public ArrayList<KClass> classes;
+		public FigureList figures;
+		SaveInfo(ArrayList<KClass> classes, FigureList figures)
+		{
+			this.classes = classes;
+			this.figures = figures;
+		}
+		public ArrayList<KClass> getClasses(){
+			return classes;
+		}
+		public FigureList getFigures(){
+			return figures;
+		}
+	}

@@ -1,0 +1,21 @@
+class ObjectModeler extends Modeler{
+	
+	public ObjectModeler(String name) {
+		super(name);
+		// TODO Auto-generated constructor stub
+		
+		BackPanel mm = new BackPanel(this);
+		Container contentPane = this.getContentPane();
+		contentPane.add(mm.getSplitPane());	
+		_controller = mm;
+		
+		Toolkit tk = Toolkit.getDefaultToolkit();
+		Dimension d = tk.getScreenSize();
+		int screenHeight = d.height;
+		int screenWidth = d.width;
+		setSize(screenWidth / 2, screenHeight / 2);
+		setLocation(screenWidth / 4, screenHeight / 4);
+		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+	}
+	
+}

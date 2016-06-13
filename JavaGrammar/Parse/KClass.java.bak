@@ -1,0 +1,77 @@
+package Parse;
+
+import java.util.*;
+import java.io.*;
+
+public class KClass implements Serializable
+{
+	String name;
+	ArrayList<KField> fields;
+	ArrayList<KMethod> methods;
+	boolean arrayFlag = false;
+	int arrayLength;
+	boolean isCustom = false;
+	public KClass(String name)
+	{
+		this.name = name;
+		fields = new ArrayList<KField>();
+		methods = new ArrayList<KMethod>();
+	}
+	public boolean isCustom()
+	{
+		return isCustom;
+	}
+	public void setCustom()
+	{
+		isCustom = true;
+	}
+	public void setArrayLength(int n)
+	{
+		arrayLength = n;
+	}
+	public int setArrayLength()
+	{
+		return arrayLength;
+	}
+	public void setArrayClass()
+	{
+		arrayFlag = true;
+	}
+	public boolean isArrayClass()
+	{
+		return arrayFlag;
+	}
+	public String getName()
+	{
+		return name;
+	}
+	public ArrayList<KField> getFields()
+	{
+		return fields;
+	}
+	public ArrayList<KMethod> getMethods()
+	{
+		return methods;
+	}
+	public void addField(KField field)
+	{
+		fields.add(field);
+	}
+	public void addMethod(KMethod methode)
+	{
+		methods.add(methode);
+	}
+	public String toString() {
+		return getName();
+	}
+	public boolean equals(Object ptr){
+		if(!(ptr instanceof KClass))
+			return false;
+		KClass p = (KClass)ptr;
+		if(p.getName().equals(name)){
+			return true;
+		}else{
+			return false;
+		}
+	}
+}

@@ -1,0 +1,358 @@
+package Figure;
+
+import java.awt.*;
+import javax.swing.tree.*;
+import Parse.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.border.*;
+
+
+public class ClassBox extends MyBox
+{
+	private static final long serialVersionUID = 329201562559321767L;
+	SlaveBox boxes[];	
+	String name = "";
+	transient JLabel nameLabel;
+	KClass classNode;
+	boolean isFocuseOnSlave;
+	SlaveBox focusedSlave;
+	//static int SLAVE_BOX_WIDTH = 35;
+	static int SLAVE_BOX_HEIGHT = 40;
+	static int POINT_BOX_WIDTH = 50;
+	static int EDIT_BOX_WIDTH = 50;
+	static int BOX_HEIGHT = 50;
+	static int SLAVE_BOX_GAP = 15;
+	static int ARRAY_LENGTH_WIDTH = 50;
+
+	ArrayList<Line> lines;
+	Point overlappedLine[][];
+	int numberOfFields;
+	int numberOfPrimitiveFields = 0;
+	int numberOfReferenceFields = 0;
+	Font font;
+	FontMetrics fontFm;
+	int fontSizeV;
+
+	public ClassBox(JPanel view, Color color,int x1,int y1,int x2,int y2) {
+		super(view, color,x1,y1,x2,y2);
+	}
+	public ClassBox(JPanel view, Object node, Color color,int x1,int y1,int x2,int y2) {
+		super(view, color,0,0,0,0);
+		classNode = (KClass)node;
+		lines = new ArrayList<Line>();
+		ArrayList<KField> fields = classNode.getFields();
+		numberOfFields = fields.size();
+		_x1 = x1;
+		_y1 = y1;
+		makeCenterPoint();
+		font = _view.getFont();
+		fontFm = _view.getFontMetrics(font);
+		boxes = new SlaveBox[numberOfFields];
+		fontSizeV = fontFm.getHeight();
+/////////////////////////////////////////////////////////////////////////////////////////////////LABEL/////////////////////////////////////////////////////////////////
+		name = classNode.getName();
+		nameLabel = new JLabel(name);
+		if(classNode.isCustom())
+			nameLabel.setForeground(Color.blue);
+		nameLabel.setToolTipText("class " + name);
+		nameLabel.setBackground(_view.getBackground());
+		nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		nameLabel.setFont(font);
+		view.add(nameLabel);
+		if (classNode.isArrayClass())
+		{
+			int arrayLength = classNode.getArrayLength();
+			boxes = new SlaveBox[4];
+			for(int i = 0; i < 4; i++)
+			{
+				if (i == 0)
+				{
+					//System.out.println("Primitive Type");
+					boxes[i] = new EditableBox(_view, new KField(" ", "length", false),
+						_x1 + SLAVE_BOX_GAP + i * EDIT_BOX_WIDTH,
+						_y1 + SLAVE_BOX_GAP,
+						_x1 + SLAVE_BOX_GAP + EDIT_BOX_WIDTH + i * EDIT_BOX_WIDTH,
+						_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT,String.valueOf(arrayLength));
+				}else if(i == 2){
+					boxes[i] = new EditableBox(_view, new KField(fields.get(0).getType(), "1 ~ " + String.valueOf(arrayLength-2), false),
+						_x1 + SLAVE_BOX_GAP + i * EDIT_BOX_WIDTH,
+						_y1 + SLAVE_BOX_GAP,
+						_x1 + SLAVE_BOX_GAP + EDIT_BOX_WIDTH + i * EDIT_BOX_WIDTH,
+						_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT," ..... ");
+				}else{
+					String tmp = "";
+					if (i == 1){
+						tmp = "0";
+					}else{
+						tmp = String.valueOf(arrayLength-1);
+					}
+					if(fields.get(0).isPrimitive()){
+						boxes[i] = new PointableBox(_view,new KField(fields.get(0).getType(), tmp, fields.get(0).isPrimitive()),
+							_x1 + SLAVE_BOX_GAP + i * EDIT_BOX_WIDTH,
+							_y1 + SLAVE_BOX_GAP,
+							_x1 + SLAVE_BOX_GAP + POINT_BOX_WIDTH + i * EDIT_BOX_WIDTH,
+							_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT);
+					}else{
+						boxes[i] = new EditableBox(_view,new KField(fields.get(0).getType(), tmp, fields.get(0).isPrimitive()),
+							_x1 + SLAVE_BOX_GAP + i * EDIT_BOX_WIDTH,
+							_y1 + SLAVE_BOX_GAP,
+							_x1 + SLAVE_BOX_GAP + POINT_BOX_WIDTH + i * EDIT_BOX_WIDTH,
+							_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT);
+					}
+				}
+				boxes[i].makeRegion();
+			}
+			_x2 = x1 + SLAVE_BOX_GAP * 2 + boxes.length * ARRAY_LENGTH_WIDTH;
+			_y2 = y1 + SLAVE_BOX_GAP * 2  + SLAVE_BOX_HEIGHT;
+			return;
+		}
+		if (numberOfFields == 0){
+			boxes = new SlaveBox[1];
+			_x2 = x1 + SLAVE_BOX_GAP * 2 + 100;
+			_y2 = y1 + SLAVE_BOX_GAP * 2  + SLAVE_BOX_HEIGHT - 10;
+			boxes[0] = new EditableBox(_view, new KField("", "", false),
+				_x1 + SLAVE_BOX_GAP,
+				_y1 + SLAVE_BOX_GAP,
+				_x1 + SLAVE_BOX_GAP + 100,
+				_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT - 10, true);
+			//EditableBox 로 부터 상속 받아 textFiled.setText(""""); 해주고 크게 그려준다!
+			boxes[0].makeRegion();
+
+			return;
+		}
+		for(int i = 0; i < numberOfFields; i++)
+		{
+			if (fields.get(i).isPrimitive())
+			{
+				//System.out.println("Primitive Type");
+				boxes[i] = new EditableBox(_view, fields.get(i),
+					_x1 + SLAVE_BOX_GAP + ( numberOfPrimitiveFields * EDIT_BOX_WIDTH ) + (numberOfReferenceFields * POINT_BOX_WIDTH),
+					_y1 + SLAVE_BOX_GAP,
+					_x1 + SLAVE_BOX_GAP + EDIT_BOX_WIDTH + ( numberOfPrimitiveFields * EDIT_BOX_WIDTH ) + (numberOfReferenceFields * POINT_BOX_WIDTH),
+					_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT);
+				numberOfPrimitiveFields++;
+			}else{
+				//System.out.println("Reference Type");
+				boxes[i] = new PointableBox(_view, fields.get(i),
+					_x1 + SLAVE_BOX_GAP + ( numberOfPrimitiveFields * EDIT_BOX_WIDTH ) + (numberOfReferenceFields * POINT_BOX_WIDTH),
+					_y1 + SLAVE_BOX_GAP,
+					_x1 + SLAVE_BOX_GAP + POINT_BOX_WIDTH + ( numberOfPrimitiveFields * EDIT_BOX_WIDTH ) + (numberOfReferenceFields * POINT_BOX_WIDTH),
+					_y1 + SLAVE_BOX_GAP + SLAVE_BOX_HEIGHT);
+				numberOfReferenceFields++;
+			}
+			boxes[i].makeRegion();
+		}
+		_x2 = x1 + SLAVE_BOX_GAP * 2 + (EDIT_BOX_WIDTH * numberOfPrimitiveFields) + (POINT_BOX_WIDTH * numberOfReferenceFields);
+		_y2 = y1 + SLAVE_BOX_GAP * 2 + SLAVE_BOX_HEIGHT;
+		numberOfFields = numberOfReferenceFields + numberOfPrimitiveFields;
+		makeOverLappedLine();
+	}
+	public void makeOverLappedLine()
+	{
+		overlappedLine = new Point[boxes.length-1][];
+		for(int i = 0; i< boxes.length-1; i++)
+		{
+			overlappedLine[i] = new Point[2];
+			overlappedLine[i][0] = new Point(boxes[i]._x2, boxes[i]._y2);
+			overlappedLine[i][1] = new Point(boxes[i]._x2, boxes[i]._y1);
+		}
+	}
+	public void doSomethingAfterLoad(JPanel view) {
+		super.doSomethingAfterLoad(view);
+		nameLabel = new JLabel(name);
+		if(classNode.isCustom())
+			nameLabel.setForeground(Color.blue);
+		nameLabel.setToolTipText("class " + name);
+		nameLabel.setBackground(_view.getBackground());
+		nameLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		nameLabel.setFont(font);
+		_view.add(nameLabel);
+		if (boxes == null)
+			return;
+		for(int i = 0; i < boxes.length; i++)
+		{
+			boxes[i].doSomethingAfterLoad(view);
+		}
+	}
+	public void draw(Graphics g) {
+		g.setColor(_color);
+		g.drawRect(_x1,_y1,_x2-_x1,_y2-_y1);
+		nameLabel.setBounds(_x1 + 5, _y1 - (fontSizeV - fontFm.getDescent()), _x2 - _x1 - 10, fontSizeV - fontFm.getDescent());
+		//g.drawString(name,_x1,_y1);		
+		if (boxes == null)
+			return;
+		for(int i = 0; i < boxes.length; i++)
+		{
+			boxes[i].draw(g);
+		}
+		if(overlappedLine == null)
+			return;
+		for(int i = 0; i < overlappedLine.length; i++)
+		{
+			g.drawLine(overlappedLine[i][0].x,overlappedLine[i][0].y,overlappedLine[i][1].x,overlappedLine[i][1].y);
+			//System.out.println(overlappedLine[i][0].x + " " + overlappedLine[i][0].y);
+		}
+	}
+	//public JLabel getLabel()
+//	{
+//		return nameLabel;
+//	}
+	public void removeLabel()
+	{
+		_view.remove(nameLabel);
+		for(int i = 0; i < boxes.length; i++)
+		{
+			boxes[i].removeLabel();
+		}
+	}
+
+	public void stopEdit() {
+		((EditableBox)focusedSlave).stopEdit();
+		focusedSlave = null;
+	}
+	public void startEdit() {
+		if (focusedSlave == null)
+		{
+			return;
+		}
+		if (!(focusedSlave instanceof EditableBox))
+		{
+			return;
+		}
+		((EditableBox)focusedSlave).startEdit();
+	}
+	public boolean focusedSlaveHasLine()
+	{
+		PointableBox pBox = (PointableBox)focusedSlave;
+		System.out.println(pBox);
+
+		return pBox.hasLine();
+	}
+	public void setFocusedSlaveLine(Line line)
+	{
+		PointableBox pBox = (PointableBox)focusedSlave;
+		pBox.setLine(line);
+	}
+
+	public Line getFocusedSlaveLine()
+	{
+		PointableBox pBox = (PointableBox)focusedSlave;
+		return pBox.getLine();
+	}
+	public SlaveBox getFocusedSlaveBox()
+	{
+		return focusedSlave;
+	}
+	public boolean ptInRegion(int x,int y) {
+		boolean val = super.ptInRegion(x,y);
+		if (val == false) return false;
+		for(int i = 0; i < boxes.length; i++){
+			if( boxes[i].ptInRegion( x, y ) == true ){	
+				focusedSlave = boxes[i];
+				break;
+			}
+		}
+		return true;
+	}
+	public boolean ptInSlaveRegion(int x,int y)
+	{
+		for(int i = 0; i < boxes.length; i++){
+			if( boxes[i].ptInRegion( x, y ) == true ){	
+				focusedSlave = boxes[i];
+				return true;
+			}
+		}
+		return false;
+	}
+	public void releaseFocusedSlaveBox()
+	{
+		focusedSlave = null;
+	}
+	public SlaveBox getFocusedSlave()
+	{
+		if(focusedSlave == null){
+			return null;
+		}else{ 
+			return focusedSlave; 
+		}
+	}
+	public Point getFocusedSlaveCenterPoint()
+	{
+		return focusedSlave.getCenterPoint();
+	}
+	public void drawDots(Graphics g){
+		super.drawDots(g);
+		if(focusedSlave != null){
+			//focusedSlave.drawDots(g);
+		}
+	}
+	public void eraseDots(Graphics g){
+		super.eraseDots(g);
+		if(focusedSlave != null){
+			//focusedSlave.eraseDots(g);
+		}
+	}
+
+	void move(int dx,int dy) {
+		_x1 = _x1 + dx; _y1 = _y1 + dy;
+		_x2 = _x2 + dx; _y2 = _y2 + dy;
+		makeCenterPoint();
+		makeRegion();
+		if (boxes == null)
+			return;
+		for(int i = 0; i < boxes.length; i++){
+			boxes[i].move(dx,dy);
+			boxes[i].makeRegion();
+			boxes[i].makeCenterPoint();
+		}
+		if(overlappedLine == null)
+			return;
+		for(int i = 0; i < overlappedLine.length; i++)
+		{
+			overlappedLine[i][0].translate(dx,dy);
+			overlappedLine[i][1].translate(dx,dy);
+		}
+	}
+	public void setLine(Line line)
+	{
+		this.lines.add(line);
+		System.out.println(name + "  " + lines.size());
+	}
+	public void removeLine(Line line)
+	{
+		this.lines.remove(line);
+	}
+	public ArrayList<Line> getAllConnectedLine()
+	{
+		for(int i = 0; i < boxes.length; i++)
+		{
+			if( boxes[i] instanceof PointableBox){
+				PointableBox pBox = (PointableBox)boxes[i];
+				if(pBox.getLine() != null)
+					lines.add(pBox.getLine());
+			}
+		}
+		return lines;
+	}
+	public ArrayList<Line> getSlaveConnectedLine()
+	{
+		ArrayList<Line> slaveLines = new ArrayList<Line>();
+		for(int i = 0; i < boxes.length; i++)
+		{
+			if( boxes[i] instanceof PointableBox){
+				PointableBox pBox = (PointableBox)boxes[i];
+				if(pBox.getLine() != null)
+					slaveLines.add(pBox.getLine());
+			}
+		}
+		return slaveLines;
+	}
+	public ArrayList<Line> getClassConnectedLine()
+	{
+		ArrayList<Line> list = new ArrayList<Line>();
+		for(int i = 0; i < lines.size(); i++)
+			list.add(lines.get(i));
+		return list;
+	}
+}
